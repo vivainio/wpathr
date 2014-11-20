@@ -1,7 +1,7 @@
 import os
 import ctypes
 from ctypes import wintypes
-
+from collections import OrderedDict
 import _winreg
 
 import sys
@@ -60,14 +60,26 @@ def get_short_path_name(long_name):
         else:
             output_buf_size = needed
 
+def shorten_path(ents):
+    od = OrderedDict()
+    for e in ents:
+        od.update({e:1})
+
+    def should_shorten(ent):
+        if len(ent) < 50:
+            return False
+        if ' ' in ent:
+            return True
+        return False
+
+    return [get_short_path_name(e) if should_shorten(e) else e for e in od.keys()]
+
 oldpath = os.environ["PATH"]
 
-eu = Win32Environment(scope = 'user')
+eu = Win32Environment(scope = 'system')
 
 oldpath = eu.getenv("PATH")
-
-paths = oldpath.split(";")
-newpath =  ";".join([get_short_path_name(p) for p in paths])
-
+newpath = shorten_path(oldpath.split(";"))
 print newpath
 print len(oldpath)," -> ", len(newpath)
+''
