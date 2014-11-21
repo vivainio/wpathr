@@ -130,13 +130,32 @@ def process_paths(funcs, commit=False):
 def main():
     def ls(a):
         """ Show list of paths in alphabetical order """
+        
+        full_path = set(os.environ["PATH"].split(";"))
+        
+        
+
         eu = Win32Environment(scope='user')
         print "\n\n*** USER: ***\n"
-        print "\n".join(sorted(eu.getenv("PATH").split(";")))
+        upath = sorted(eu.getenv("PATH").split(";"))
+        print "\n".join(upath)
 
         es = Win32Environment(scope='system')
         print "\n\n*** SYSTEM: ***\n"
-        print "\n".join(sorted(es.getenv("PATH").split(";")))
+        spath = sorted(es.getenv("PATH").split(";"))
+        print "\n".join(spath)
+
+        uncovered = full_path.difference(set(upath).union(set(spath)))
+        print "\n\n*** OTHER (nonregistry): ***\n"
+        print "\n".join(sorted(uncovered))
+
+        inactive = set(upath).union(set(spath)).difference(full_path)
+        if inactive:
+            print "\n\n*** INACTIVE (in registry but not in current environ): ***\n"
+            print "\n".join(sorted(inactive))
+
+
+
 
     def squash(arg):
         """ Shorten path by using windows "short" path names (Program~1)"""
@@ -249,9 +268,11 @@ def main():
 
         process_paths([factor_out], arg.commit)
         if arg.commit:
-            Win32Environment('system').setenv(var, cal)
+            Win32Environment('system').setenv(var, val)
 
       
+    def sset(arg):
+        Win32Environment("system").setenv(arg.variable, arg.value)
 
     args.sub("ls", ls, help = "List paths alphabetically")
     sqc = args.sub("squash", squash, help = "Shorten paths by squashing (convert to progra~1 format)")
@@ -263,6 +284,10 @@ def main():
     fac = args.sub("factor", factor, help = "Factor out runs of VALUE in path to %%VARIABLE%% referenses")
     fac.arg("variable", metavar="VARIABLE")
     fac.arg("value", metavar="VALUE")
+    sset = args.sub("sset", sset, help="Set SYSTEM env variable to VALUE. Like xset /s, really")
+    sset.arg("variable", metavar="VARIABLE")
+    sset.arg("value", metavar="VALUE")
+
     src.add_argument("pattern", type=str, nargs="+")
 
     # operations that support --commit

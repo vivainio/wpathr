@@ -47,3 +47,7 @@ exists - remove nonexisting items from path
 search PATTERN PATTERN - search through path, looking for files matching any of PATTERNs
 
 long - map shortened names (e.g. by squash) to long names, show on screen (but do not modify)
+
+factor - extract runs of path segment to new environment variable, e.g.
+
+    python .\wpathr.py factor CONEMU_ROOT "C:\Program Files\ConEmu"
