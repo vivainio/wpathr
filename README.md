@@ -45,3 +45,5 @@ dedupe - remove duplicates from path, ignoring case
 exists - remove nonexisting items from path
 
 search PATTERN PATTERN - search through path, looking for files matching any of PATTERNs
+
+long - map shortened names (e.g. by squash) to long names, show on screen (but do not modify)

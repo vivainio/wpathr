@@ -49,6 +49,11 @@ _GetShortPathNameW = ctypes.windll.kernel32.GetShortPathNameW
 _GetShortPathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]
 _GetShortPathNameW.restype = wintypes.DWORD
 
+_GetLongPathNameW = ctypes.windll.kernel32.GetLongPathNameW
+_GetLongPathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]
+_GetLongPathNameW.restype = wintypes.DWORD
+
+
 def get_short_path_name(long_name):
     """
     Gets the short path name of a given long path.
@@ -62,6 +67,21 @@ def get_short_path_name(long_name):
             return output_buf.value
         else:
             output_buf_size = needed
+
+def get_long_path_name(short_name):
+    """
+    Gets the long path name of a given long path.
+    http://stackoverflow.com/a/23598461/200291
+    """
+    output_buf_size = 0
+    while True:
+        output_buf = ctypes.create_unicode_buffer(output_buf_size)
+        needed = _GetLongPathNameW(short_name, output_buf, output_buf_size)
+        if output_buf_size >= needed:
+            return output_buf.value
+        else:
+            output_buf_size = needed
+
 
 def shorten_path(ents):
     od = OrderedDict()
@@ -196,12 +216,27 @@ def main():
 
         process_paths([search_path], None)
             
+    def longnames(arg):
+        """ Show long names for all entries in path """
+        def to_long(path):
+            for p in path:
+                long = get_long_path_name(p)
+                if p != long:
+
+                    print p, "->", long
+                else:
+                    print p
+            return None
+
+        process_paths([to_long], None)
+
     args.sub("ls", ls)
     sqc = args.sub("squash", squash)
     args.sub("dump", dump)
     ddc = args.sub("dedupe", dedupe)
     exc = args.sub("exists", exists)
     src = args.sub("search", search)
+    lnc = args.sub("long", longnames)
     src.add_argument("pattern", type=str, nargs="+")
 
     for a in [sqc, ddc, exc]:
