@@ -89,7 +89,6 @@ def main():
         print "\n".join(es.getenv("PATH").split(";"))
 
     def squash(arg):
-        print arg
         for sc in ['user', 'system']:
             env = Win32Environment(scope=sc)
             oldpath = env.getenv("PATH")
@@ -97,10 +96,14 @@ def main():
             newpath = ";".join(shorten_path(oldpath.split(";")))
             print sc,":="
             print newpath
-            #if arg.commit:
+            if arg.commit:
+                env.setenv("PATH", newpath)
                 
-
-
+       
+        if not arg.commit:
+            print "Call 'wpathr.py squash --commit' to commit changes to env registry"
+        else:
+            print "Committed changes to registry" 
             #print newpath
 
     def dump(arg):
