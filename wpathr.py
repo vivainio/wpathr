@@ -83,6 +83,16 @@ def get_long_path_name(short_name):
             output_buf_size = needed
 
 
+def broadcast_settingschanged():
+    HWND_BROADCAST = 0xFFFF
+    WM_SETTINGCHANGE = 0x1A
+
+    SMTO_ABORTIFHUNG = 0x0002
+
+    result = ctypes.c_long()
+    SendMessageTimeoutW = ctypes.windll.user32.SendMessageTimeoutW
+    SendMessageTimeoutW(HWND_BROADCAST, WM_SETTINGCHANGE, 0, u'Environment', SMTO_ABORTIFHUNG, 5000, ctypes.byref(result));
+
 def shorten_path(ents):
     od = OrderedDict()
     for e in ents:
@@ -277,6 +287,9 @@ def main():
     def sset(arg):
         Win32Environment("system").setenv(arg.variable, arg.value)
 
+    def sync(arg):
+        broadcast_settingschanged()
+
     args.sub("ls", ls, help = "List paths alphabetically")
     sqc = args.sub("squash", squash, help = "Shorten paths by squashing (convert to progra~1 format)")
     args.sub("dump", dump, help = "Dump paths to screen in original format (for backup)")
@@ -290,6 +303,8 @@ def main():
     sset = args.sub("sset", sset, help="Set SYSTEM env variable to VALUE. Like xset /s, really")
     sset.arg("variable", metavar="VARIABLE")
     sset.arg("value", metavar="VALUE")
+
+    syc = args.sub("sync", sync, help="Notify other processes to sync the environment")
 
     src.add_argument("pattern", type=str, nargs="+")
 
