@@ -3,6 +3,8 @@ import ctypes
 from ctypes import wintypes
 from collections import OrderedDict
 import _winreg
+import args
+import tempfile
 
 import sys
 from subprocess import check_call
@@ -66,20 +68,52 @@ def shorten_path(ents):
         od.update({e:1})
 
     def should_shorten(ent):
-        if len(ent) < 50:
+        if '~' in ent or len(ent) < 50:
             return False
         if ' ' in ent:
             return True
-        return False
+        return False     
 
     return [get_short_path_name(e) if should_shorten(e) else e for e in od.keys()]
 
-oldpath = os.environ["PATH"]
 
-eu = Win32Environment(scope = 'system')
 
-oldpath = eu.getenv("PATH")
-newpath = shorten_path(oldpath.split(";"))
-print newpath
-print len(oldpath)," -> ", len(newpath)
-''
+def main():
+    def ls(a):
+        eu = Win32Environment(scope='user')
+        print "\n\n*** USER: ***\n"
+        print "\n".join(eu.getenv("PATH").split(";"))
+
+        es = Win32Environment(scope='system')
+        print "\n\n*** SYSTEM: ***\n"
+        print "\n".join(es.getenv("PATH").split(";"))
+
+    def squash(arg):
+        print arg
+        for sc in ['user', 'system']:
+            env = Win32Environment(scope=sc)
+            oldpath = env.getenv("PATH")
+
+            newpath = ";".join(shorten_path(oldpath.split(";")))
+            print sc,":="
+            print newpath
+            #if arg.commit:
+                
+
+
+            #print newpath
+
+    def dump(arg):
+        for sc in ['user', 'system']:
+            env = Win32Environment(scope=sc)
+            oldpath = env.getenv("PATH")
+            print sc, ":="
+            print oldpath
+
+    args.sub("ls", ls)
+    sq = args.sub("squash", squash)
+    args.sub("dump", dump)
+    sq.add_argument("--commit", action='store_true')
+    args.parse()
+
+main()  
