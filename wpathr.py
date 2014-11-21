@@ -222,7 +222,9 @@ def main():
         patterns = [p if '*' in p else p+"*" for p in arg.pattern]
         def search_path(path):
             for p in path:
-                ents = os.listdir(p)
+                ep = os.path.expandvars(p)
+                ents = os.listdir(ep)
+
                 #print ents
                 hits = set()
                 for pat in patterns:
