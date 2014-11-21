@@ -160,6 +160,7 @@ def main():
         def check_existing(path):
             r = []
             for p in path:
+                p = os.path.expandvars(p)
                 if os.path.isdir(p):
                     r.append(p)
                 else:
