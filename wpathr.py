@@ -166,8 +166,8 @@ def main():
         def check_existing(path):
             r = []
             for p in path:
-                p = os.path.expandvars(p)
-                if os.path.isdir(p):
+                pe = os.path.expandvars(p)
+                if os.path.isdir(pe):
                     r.append(p)
                 else:
                     print "Path does not exist:", p
