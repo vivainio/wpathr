@@ -22,12 +22,12 @@ Typical usage:
 ```sh
 # grab a backup
 
-$ python wpath.py dump > path_backup.txt
+$ python wpathr.py dump > path_backup.txt
 
 # preview what the new path would look like
-$ python wpath.py squash
+$ python wpathr.py squash
 
 # I like it, squash again with --commit to write changes
 
-$ python wpath.py squash --commit
+$ python wpathr.py squash --commit
 ```
