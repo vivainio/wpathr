@@ -27,11 +27,11 @@ def parse():
         parsed.func(parsed)
     return parsed
 
-def sub(name, func, arg = None):
+def sub(name, func, arg = None, **kwarg):
     """ Add subparser
 
     """
-    sp = subparsers.add_parser(name)
+    sp = subparsers.add_parser(name, **kwarg)
     sp.set_defaults(func=func)
     if arg is not None:
         for a in arg:

@@ -230,13 +230,13 @@ def main():
 
         process_paths([to_long], None)
 
-    args.sub("ls", ls)
-    sqc = args.sub("squash", squash)
-    args.sub("dump", dump)
-    ddc = args.sub("dedupe", dedupe)
-    exc = args.sub("exists", exists)
-    src = args.sub("search", search)
-    lnc = args.sub("long", longnames)
+    args.sub("ls", ls, help = "List paths alphabetically")
+    sqc = args.sub("squash", squash, help = "Shorten paths by squashing (convert to progra~1 format)")
+    args.sub("dump", dump, help = "Dump paths to screen in original format (for backup)")
+    ddc = args.sub("dedupe", dedupe, help = "Remove duplicate paths")
+    exc = args.sub("exists", exists, help = "Remove nonexisting paths")
+    src = args.sub("search", search, help = "Scan through path for files matching PATTERN")
+    lnc = args.sub("long", longnames, help = "Show long names (progra~1 -> Program Files")
     src.add_argument("pattern", type=str, nargs="+")
 
     for a in [sqc, ddc, exc]:
