@@ -4,6 +4,7 @@ from ctypes import wintypes
 from collections import OrderedDict
 import _winreg
 import args
+import fnmatch
 
 import sys
 from subprocess import check_call
@@ -87,12 +88,21 @@ def process_paths(funcs, commit=False):
 
         for f in funcs:
             cur_path = f(cur_path)
+    
+
+        if cur_path is None:
+            # no manipulation, assume no mods needed and exit
+            return
             
         newpath = ";".join(cur_path)
         print sc,":="
         print newpath
         if commit:
             env.setenv("PATH", newpath)
+    
+    if commit is None:
+        # hack - do not complain if commit makes no sense
+        return
     if not commit:
         print "Call with '--commit' to commit changes to env registry"
 
@@ -158,12 +168,32 @@ def main():
 
         process_paths([check_existing], arg.commit)
                             
+
+    def search(arg):
+        patterns = [p if '*' in p else p+"*" for p in arg.pattern]
+        def search_path(path):
+            for p in path:
+                ents = os.listdir(p)
+                #print ents
+                hits = set()
+                for pat in patterns:
+
+                    hits.update(h for h in ents if fnmatch.fnmatch(h,pat))
+                
+                if hits:
+                    print p
+                    print " " + " ".join(hits)
+            return None
+
+        process_paths([search_path], None)
             
     args.sub("ls", ls)
     sqc = args.sub("squash", squash)
     args.sub("dump", dump)
     ddc = args.sub("dedupe", dedupe)
     exc = args.sub("exists", exists)
+    src = args.sub("search", search)
+    src.add_argument("pattern", type=str, nargs="+")
 
     for a in [sqc, ddc, exc]:
         a.add_argument("--commit", action='store_true')
