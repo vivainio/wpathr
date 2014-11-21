@@ -109,6 +109,7 @@ def process_paths(funcs, commit=False):
 
 def main():
     def ls(a):
+        """ Show list of paths in alphabetical order """
         eu = Win32Environment(scope='user')
         print "\n\n*** USER: ***\n"
         print "\n".join(sorted(eu.getenv("PATH").split(";")))
@@ -118,6 +119,7 @@ def main():
         print "\n".join(sorted(es.getenv("PATH").split(";")))
 
     def squash(arg):
+        """ Shorten path by using windows "short" path names (Program~1)"""
         for sc in ['user', 'system']:
             env = Win32Environment(scope=sc)
             oldpath = env.getenv("PATH")
@@ -136,6 +138,7 @@ def main():
             #print newpath
 
     def dump(arg):
+        """ Dump user and system path settings """
         for sc in ['user', 'system']:
             env = Win32Environment(scope=sc)
             oldpath = env.getenv("PATH")
@@ -143,6 +146,7 @@ def main():
             print oldpath
 
     def dedupe(arg):
+        """ Remove duplicates from path """
         def deduper(path):
             rset = set()
             r = []
@@ -157,6 +161,8 @@ def main():
         process_paths([deduper], arg.commit)
 
     def exists(arg):
+        """ Filter path by removing nonexisting entries """
+
         def check_existing(path):
             r = []
             for p in path:
@@ -171,6 +177,8 @@ def main():
                             
 
     def search(arg):
+        """ Search path for files matching a pattern """
+
         patterns = [p if '*' in p else p+"*" for p in arg.pattern]
         def search_path(path):
             for p in path:
