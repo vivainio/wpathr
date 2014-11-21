@@ -230,6 +230,29 @@ def main():
 
         process_paths([to_long], None)
 
+    def factor(arg):
+        print "Factor", arg
+        var = arg.variable
+        val = arg.value
+        def factor_out(path):
+            r = []
+            for p in path:
+                replaced = p.replace(val, "%" + var + "%")
+                if replaced != p:
+                    print "Can replace:", p,"->", replaced
+                r.append(replaced)
+            return r
+
+
+        if arg.commit and var in os.environ:
+            print "Cannot factor out against existing environment variable. Please remove:",var
+
+        process_paths([factor_out], arg.commit)
+        if arg.commit:
+            Win32Environment('system').setenv(var, cal)
+
+      
+
     args.sub("ls", ls, help = "List paths alphabetically")
     sqc = args.sub("squash", squash, help = "Shorten paths by squashing (convert to progra~1 format)")
     args.sub("dump", dump, help = "Dump paths to screen in original format (for backup)")
@@ -237,9 +260,13 @@ def main():
     exc = args.sub("exists", exists, help = "Remove nonexisting paths")
     src = args.sub("search", search, help = "Scan through path for files matching PATTERN")
     lnc = args.sub("long", longnames, help = "Show long names (progra~1 -> Program Files")
+    fac = args.sub("factor", factor, help = "Factor out runs of VALUE in path to %%VARIABLE%% referenses")
+    fac.arg("variable", metavar="VARIABLE")
+    fac.arg("value", metavar="VALUE")
     src.add_argument("pattern", type=str, nargs="+")
 
-    for a in [sqc, ddc, exc]:
+    # operations that support --commit
+    for a in [sqc, ddc, exc, fac]:
         a.add_argument("--commit", action='store_true')
 
     args.parse()

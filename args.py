@@ -33,6 +33,7 @@ def sub(name, func, arg = None, **kwarg):
     """
     sp = subparsers.add_parser(name, **kwarg)
     sp.set_defaults(func=func)
+    sp.arg = sp.add_argument
     if arg is not None:
         for a in arg:
             sp.add_argument(a, type=str)
