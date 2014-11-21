@@ -31,3 +31,17 @@ $ python wpathr.py squash
 
 $ python wpathr.py squash --commit
 ```
+
+This utility supports several path operations, like:
+
+ls - list all entries in USER and SYSTEM paths, in alphabetical order
+
+squash - shorten path names (as explained above)
+
+dump - dump paths to screen. Useful as quick backup (as illustrated above)
+
+dedupe - remove duplicates from path, ignoring case
+
+exists - remove nonexisting items from path
+
+search PATTERN PATTERN - search through path, looking for files matching any of PATTERNs
