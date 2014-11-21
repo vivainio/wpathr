@@ -145,13 +145,27 @@ def main():
             return r
 
         process_paths([deduper], arg.commit)
-            
+
+    def exists(arg):
+        def check_existing(path):
+            r = []
+            for p in path:
+                if os.path.isdir(p):
+                    r.append(p)
+                else:
+                    print "Path does not exist:", p
+            return r
+
+        process_paths([check_existing], arg.commit)
+                            
             
     args.sub("ls", ls)
-    sq = args.sub("squash", squash)
+    sqc = args.sub("squash", squash)
     args.sub("dump", dump)
-    dd = args.sub("dedupe", dedupe)
-    for a in [sq, dd]:
+    ddc = args.sub("dedupe", dedupe)
+    exc = args.sub("exists", exists)
+
+    for a in [sqc, ddc, exc]:
         a.add_argument("--commit", action='store_true')
 
     args.parse()
