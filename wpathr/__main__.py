@@ -1,0 +1,2 @@
+import wpathr
+wpathr.main()

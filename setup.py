@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name='wpathr',
-      version='0.1',
+      version='0.1.2',
       description='Path optimization tool for Windows',
       author='Ville Vainio',
       author_email='vivainio@gmail.com',
@@ -9,7 +9,7 @@ setup(name='wpathr',
       packages=['wpathr'],
       entry_points = {
         'console_scripts': [
-            'wpathr = wpathr.main',
+            'wpathr = wpathr.wpathr:main',
         ]
       }
      )
