@@ -1,4 +1,23 @@
-wpathr: shorten your PATH on windows.
+# wpathr: shorten your PATH on windows.
+
+wpathr (pronounced 'weather') is a PATH manipulation tool.
+Taking backup of your relevant Path registry entries is adviced. Note that
+editing registry *can* wedge up your system.
+
+Installation (assuming pip):
+
+```sh
+
+$ pip install wpathr
+$ wpathr -h
+# ... should see help message for wpathr
+```
+
+If you don't have pip, just git clone and
+
+```
+python wpathr -h
+```
 
 Motivation:
 
@@ -22,14 +41,14 @@ Typical usage:
 ```sh
 # grab a backup
 
-$ python wpathr.py dump > path_backup.txt
+$ wpathr dump > path_backup.txt
 
 # preview what the new path would look like
-$ python wpathr.py squash
+$ wpathr squash
 
 # I like it, squash again with --commit to write changes
 
-$ python wpathr.py squash --commit
+$ wpathr squash --commit
 ```
 
 This utility supports several path operations, like:
