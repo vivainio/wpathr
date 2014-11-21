@@ -286,6 +286,7 @@ def main():
       
     def sset(arg):
         Win32Environment("system").setenv(arg.variable, arg.value)
+        broadcast_settingschanged()
 
     def sync(arg):
         broadcast_settingschanged()
