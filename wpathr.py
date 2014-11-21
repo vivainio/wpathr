@@ -4,10 +4,10 @@ from ctypes import wintypes
 from collections import OrderedDict
 import _winreg
 import args
-import tempfile
 
 import sys
 from subprocess import check_call
+
 if sys.hexversion > 0x03000000:
     import winreg
 else:
@@ -72,21 +72,40 @@ def shorten_path(ents):
             return False
         if ' ' in ent:
             return True
-        return False     
+        return False
 
     return [get_short_path_name(e) if should_shorten(e) else e for e in od.keys()]
 
+
+
+def process_paths(funcs, commit=False):
+    """ run a sequence of funcs on path """
+    for sc in ['user', 'system']:
+        env = Win32Environment(scope=sc)
+        oldpath = env.getenv("PATH")
+        cur_path = oldpath.split(";")
+
+        for f in funcs:
+            cur_path = f(cur_path)
+            
+        newpath = ";".join(cur_path)
+        print sc,":="
+        print newpath
+        if commit:
+            env.setenv("PATH", newpath)
+    if not commit:
+        print "Call with '--commit' to commit changes to env registry"
 
 
 def main():
     def ls(a):
         eu = Win32Environment(scope='user')
         print "\n\n*** USER: ***\n"
-        print "\n".join(eu.getenv("PATH").split(";"))
+        print "\n".join(sorted(eu.getenv("PATH").split(";")))
 
         es = Win32Environment(scope='system')
         print "\n\n*** SYSTEM: ***\n"
-        print "\n".join(es.getenv("PATH").split(";"))
+        print "\n".join(sorted(es.getenv("PATH").split(";")))
 
     def squash(arg):
         for sc in ['user', 'system']:
@@ -98,12 +117,12 @@ def main():
             print newpath
             if arg.commit:
                 env.setenv("PATH", newpath)
-                
-       
+
+
         if not arg.commit:
             print "Call 'wpathr.py squash --commit' to commit changes to env registry"
         else:
-            print "Committed changes to registry" 
+            print "Committed changes to registry"
             #print newpath
 
     def dump(arg):
@@ -113,10 +132,29 @@ def main():
             print sc, ":="
             print oldpath
 
+    def dedupe(arg):
+        def deduper(path):
+            rset = set()
+            r = []
+            for e in path:
+                if e.lower() in rset:
+                    print "Duplicate:", e
+                else:
+                    r.append(e)
+                    rset.add(e.lower())
+            return r
+
+        process_paths([deduper], arg.commit)
+            
+            
     args.sub("ls", ls)
     sq = args.sub("squash", squash)
     args.sub("dump", dump)
-    sq.add_argument("--commit", action='store_true')
+    dd = args.sub("dedupe", dedupe)
+    for a in [sq, dd]:
+        a.add_argument("--commit", action='store_true')
+
     args.parse()
 
-main()  
+if __name__ == "__main__":
+    main()
