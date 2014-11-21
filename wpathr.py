@@ -146,8 +146,9 @@ def main():
         print "\n".join(spath)
 
         uncovered = full_path.difference(set(upath).union(set(spath)))
-        print "\n\n*** OTHER (nonregistry): ***\n"
-        print "\n".join(sorted(uncovered))
+        if uncovered:
+            print "\n\n*** OTHER (nonregistry): ***\n"
+            print "\n".join(sorted(uncovered))
 
         inactive = set(upath).union(set(spath)).difference(full_path)
         if inactive:
