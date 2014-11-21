@@ -3,8 +3,8 @@
 Meant to be used like this::
 
     import args
-    s1 = args.sub("check", do_check, ["filename"])
-    s1 = args.sub("sign", do_sign, ["filename"])
+    s1 = args.sub("check", do_check)
+    s1 = args.sub("sign", do_sign, help="Sign the delivery")
 
 
     ops = args.parse()
@@ -13,11 +13,28 @@ Meant to be used like this::
 
 import argparse, sys
 
-p = argparse.ArgumentParser()
+# yes, 'p' will contain the parser
 
-arg = p.add_argument
+p = None
+subparsers = None
 
-subparsers = p.add_subparsers()
+def init(parser = None):
+    """ module needs to be initialized by 'init'.
+
+    Can be called with parser to use a pre-built parser, otherwise
+    a simple default parser is created
+    """
+
+    global p,subparsers
+    if parser is None:
+        p = argparse.ArgumentParser()
+    else:
+        p = parser
+
+    arg = p.add_argument
+
+    subparsers = p.add_subparsers()
+
 
 def parse():
     """ Call this after declaring your arguments
@@ -35,5 +52,3 @@ def sub(name, func,**kwarg):
     sp.set_defaults(func=func)
     sp.arg = sp.add_argument
     return sp
-
-

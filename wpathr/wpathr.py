@@ -5,6 +5,7 @@ from collections import OrderedDict
 import _winreg
 import args
 import fnmatch
+import argparse
 
 import sys
 from subprocess import check_call
@@ -118,18 +119,18 @@ def process_paths(funcs, commit=False):
 
         for f in funcs:
             cur_path = f(cur_path)
-    
+
 
         if cur_path is None:
             # no manipulation, assume no mods needed and exit
             return
-            
+
         newpath = ";".join(cur_path)
         print sc,":="
         print newpath
         if commit:
             env.setenv("PATH", newpath)
-    
+
     if commit is None:
         # hack - do not complain if commit makes no sense
         return
@@ -140,10 +141,10 @@ def process_paths(funcs, commit=False):
 def main():
     def ls(a):
         """ Show list of paths in alphabetical order """
-        
+
         full_path = set(os.environ["PATH"].split(";"))
-        
-        
+
+
 
         eu = Win32Environment(scope='user')
         print "\n\n*** USER: ***\n"
@@ -224,7 +225,7 @@ def main():
             return r
 
         process_paths([check_existing], arg.commit)
-                            
+
 
     def search(arg):
         """ Search path for files matching a pattern """
@@ -240,14 +241,14 @@ def main():
                 for pat in patterns:
 
                     hits.update(h for h in ents if fnmatch.fnmatch(h,pat))
-                
+
                 if hits:
                     print p
                     print " " + " ".join(hits)
             return None
 
         process_paths([search_path], None)
-            
+
     def longnames(arg):
         """ Show long names for all entries in path """
         def to_long(path):
@@ -283,7 +284,7 @@ def main():
         if arg.commit:
             Win32Environment('system').setenv(var, val)
 
-      
+
     def sset(arg):
         Win32Environment("system").setenv(arg.variable, arg.value)
         broadcast_settingschanged()
@@ -291,6 +292,11 @@ def main():
     def sync(arg):
         broadcast_settingschanged()
 
+    pp = argparse.ArgumentParser(prog = "wpathr",
+    description="PATH optimization and management utility for Windows",
+    epilog="See https://github.com/vivainio/wpathr for detailed documentation.")
+
+    args.init(pp)
     args.sub("ls", ls, help = "List paths alphabetically")
     sqc = args.sub("squash", squash, help = "Shorten paths by squashing (convert to progra~1 format)")
     args.sub("dump", dump, help = "Dump paths to screen in original format (for backup)")
@@ -307,7 +313,7 @@ def main():
 
     syc = args.sub("sync", sync, help="Notify other processes to sync the environment")
 
-    src.add_argument("pattern", type=str, nargs="+")
+    src.arg("pattern", type=str, nargs="+")
 
     # operations that support --commit
     for a in [sqc, ddc, exc, fac]:
