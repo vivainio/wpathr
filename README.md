@@ -69,4 +69,4 @@ long - map shortened names (e.g. by squash) to long names, show on screen (but d
 
 factor - extract runs of path segment to new environment variable, e.g.
 
-    python .\wpathr.py factor CONEMU_ROOT "C:\Program Files\ConEmu"
+    $ wpathr factor CONEMU_ROOT "C:\Program Files\ConEmu"
