@@ -183,7 +183,7 @@ def main():
 
 
         if not arg.commit:
-            print "Call 'wpathr.py squash --commit' to commit changes to env registry"
+            print "Call 'wpathr squash --commit' to commit changes to env registry"
         else:
             print "Committed changes to registry"
             #print newpath
@@ -292,6 +292,36 @@ def main():
     def sync(arg):
         broadcast_settingschanged()
 
+    def add_s(arg):
+        e = Win32Environment('system')
+        oldpath = e.getenv("PATH")
+        oldpath_l = oldpath.lower().split(";")
+        newpath = oldpath.split(";")
+        for d in arg.directory:
+            d = os.path.abspath(d)
+            if d.lower() in oldpath_l:
+                print "Skip existing:", d
+                continue
+
+            newpath.append(d)
+            print "Add:",d
+        if not arg.commit:
+            print "Call with '--commit' to write changes"
+            return
+
+        e.setenv("PATH", ';'.join(newpath))
+
+    def remove_s(arg):
+        def remover(path):
+            newpath = path[:]
+            for d in arg.directory:
+                if d in newpath:
+                    print "Remove:",d
+                    newpath.remove(d)
+            return newpath
+
+        process_paths([remover], arg.commit)
+
     pp = argparse.ArgumentParser(prog = "wpathr",
     description="PATH optimization and management utility for Windows",
     epilog="See https://github.com/vivainio/wpathr for detailed documentation.")
@@ -315,9 +345,15 @@ def main():
 
     src.arg("pattern", type=str, nargs="+")
 
+    adc = args.sub("add", add_s, help='Add directory to System path')
+    adc.arg('directory', nargs="+")
+
+    rmc = args.sub('remove', remove_s, help="Remove directory from path")
+    rmc.arg('directory', nargs="+")
+
     # operations that support --commit
-    for a in [sqc, ddc, exc, fac]:
-        a.add_argument("--commit", action='store_true')
+    for a in [sqc, ddc, exc, fac, adc, rmc]:
+        a.arg("--commit", action='store_true')
 
     args.parse()
 
