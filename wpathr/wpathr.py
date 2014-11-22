@@ -123,7 +123,7 @@ def process_paths(funcs, commit=False):
 
         if cur_path is None:
             # no manipulation, assume no mods needed and exit
-            return
+            continue
 
         newpath = ";".join(cur_path)
         print sc,":="

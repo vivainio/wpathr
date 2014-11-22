@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name='wpathr',
-      version='0.1.3',
+      version='0.1.4',
       description='Path optimization tool for Windows',
       author='Ville Vainio',
       author_email='vivainio@gmail.com',
