@@ -15,16 +15,16 @@ $ wpathr -h
 
 If you don't have pip, just git clone and
 
-```
+```sh
 python wpathr -h
 ```
 
 Motivation:
 
 Windows has path size limitations, so when you add new entries (even through
-relevant registry entries), you may end up truncating and losing entries from path.
+editing relevant registry entries directly), you may end up truncating and losing entries from path.
 
-Mechanism:
+Solution:
 
 - Scans PATH environment settings for User and System scope in registry.
 - Removes duplicate entries (same path twice in PATH)
@@ -53,20 +53,23 @@ $ wpathr squash --commit
 
 This utility supports several path operations, like:
 
-ls - list all entries in USER and SYSTEM paths, in alphabetical order
+ls: list all entries in USER and SYSTEM paths, in alphabetical order
 
-squash - shorten path names (as explained above)
+squash: shorten path names (as explained above)
 
-dump - dump paths to screen. Useful as quick backup (as illustrated above)
+dump: dump paths to screen. Useful as quick backup (as illustrated above)
 
-dedupe - remove duplicates from path, ignoring case
+dedupe: remove duplicates from path, ignoring case
 
-exists - remove nonexisting items from path
+exists: remove nonexisting items from path
 
-search PATTERN PATTERN - search through path, looking for files matching any of PATTERNs
+search PATTERN PATTERN: search directories in PATH, looking for files matching any of 
+ the PATTERNs under these directories. 
 
-long - map shortened names (e.g. by squash) to long names, show on screen (but do not modify)
+long: map shortened names (e.g. by squash) to long names, show on screen (but do not modify)
 
-factor - extract runs of path segment to new environment variable, e.g.
+factor: extract runs of path segment to new environment variable, e.g.
 
+```sh
     $ wpathr factor CONEMU_ROOT "C:\Program Files\ConEmu"
+```
