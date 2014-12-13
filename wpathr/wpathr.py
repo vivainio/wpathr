@@ -122,11 +122,12 @@ def shorten_path(ents):
 
 def process_paths(funcs, commit=False):
     """ run a sequence of funcs on path """
+    dirty = False
     for sc in ['user', 'system']:
         env = Win32Environment(scope=sc)
         oldpath = env.getenv("PATH")
         cur_path = oldpath.split(";")
-
+        old_items = set(cur_path)
         for f in funcs:
             cur_path = f(cur_path)
 
@@ -135,16 +136,33 @@ def process_paths(funcs, commit=False):
             # no manipulation, assume no mods needed and exit
             continue
 
+
         newpath = ";".join(cur_path)
-        print sc,":="
-        print newpath
+        new_items = set(cur_path)
+    
+
+        #print sc,":="
+        #print newpath
+        actions = []
+        for added in new_items.difference(old_items):
+            actions.appends("+ " + added)
+        for deleted in old_items.difference(new_items):
+            actions.append("- " + deleted)
+
+        if not actions:
+            print "No changes for:",sc
+        else:
+            print "Changes for:",sc
+            print "\n".join(actions)
+            dirty = True
+
         if commit:
             env.setenv("PATH", newpath)
 
     if commit is None:
         # hack - do not complain if commit makes no sense
         return
-    if not commit:
+    if dirty and not commit:
         print "Call with '--commit' to commit changes to env registry"
 
 
@@ -325,7 +343,7 @@ def main():
             newpath = path[:]
             for d in arg.directory:
                 if d in newpath:
-                    print "Remove:",d
+                    #print "Remove:",d
                     newpath.remove(d)
             return newpath
 
@@ -347,8 +365,6 @@ def main():
             v = os.environ[uc]
             if os.path.exists(os.path.expandvars(v)):
                 print uc,"->", v
-
-
 
 
     pp = argparse.ArgumentParser(prog = "wpathr",
@@ -384,6 +400,7 @@ def main():
     # operations that support --commit
     for a in [sqc, ddc, exc, fac, adc, rmc]:
         a.arg("--commit", action='store_true')
+
 
     args.parse()
 
