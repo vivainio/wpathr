@@ -4,11 +4,11 @@ Meant to be used like this::
 
     import args
     s1 = args.sub("check", do_check)
-    s1 = args.sub("sign", do_sign, help="Sign the delivery")
+    s2 = args.sub("sign", do_sign, help="Sign the delivery")
 
+    s2.arg("signature", metavar="SIGNATURE")
 
     ops = args.parse()
-
 """
 
 import argparse, sys
