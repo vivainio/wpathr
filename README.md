@@ -71,5 +71,52 @@ long: map shortened names (e.g. by squash) to long names, show on screen (but do
 factor: extract runs of path segment to new environment variable, e.g.
 
 ```sh
-    $ wpathr factor CONEMU_ROOT "C:\Program Files\ConEmu"
+$ wpathr factor CONEMU_ROOT "C:\Program Files\ConEmu"
+
+```
+
+Example: configure PATH for sublime text:
+
+```
+# set environment variable
+$ wpathr sset SUBLIME c:\opt\ST3
+
+# add the environment variable to PATH
+wpathr add --commit %SUBLIME%
+```
+
+Example: make GitHub for windows paths shorter
+
+```
+wpathr factor --commit GITHUB C:\Users\villevai\AppData\Local\GitHub
+```
+
+Help text:
+
+```
+usage: wpathr [-h]
+              {ls,squash,dump,dedupe,exists,search,long,factor,sset,sync,add,remove}
+              ...
+
+PATH optimization and management utility for Windows
+
+positional arguments:
+  {ls,squash,dump,dedupe,exists,search,long,factor,sset,sync,add,remove}
+    ls                  List paths alphabetically
+    squash              Shorten paths by squashing (convert to progra~1
+                        format)
+    dump                Dump paths to screen in original format (for backup)
+    dedupe              Remove duplicate paths
+    exists              Remove nonexisting paths
+    search              Scan through path for files matching PATTERN
+    long                Show long names (progra~1 -> Program Files
+    factor              Factor out runs of VALUE in path to %VARIABLE%
+                        referenses
+    sset                Set SYSTEM env variable to VALUE. Like xset /s, really
+    sync                Notify other processes to sync the environment
+    add                 Add directory to System path
+    remove              Remove directory from path
+
+optional arguments:
+  -h, --help            show this help message and exit
 ```

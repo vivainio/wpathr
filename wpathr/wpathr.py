@@ -162,7 +162,7 @@ def main():
         inactive = set(upath).union(set(spath)).difference(full_path)
         if inactive:
             print "\n\n*** INACTIVE (in registry but not in current environ): ***\n"
-            print "\n".join(sorted(inactive))
+            print "\n".join(sorted(d for d in inactive if not d.startswith('%')))
 
 
     def squash(arg):
@@ -232,6 +232,7 @@ def main():
                 ep = os.path.expandvars(p)
                 if not os.path.isdir(ep):
                     print "NONEXISTING:", ep
+                # print "Scan",ep
                 ents = os.listdir(ep)
 
                 #print ents
@@ -251,7 +252,7 @@ def main():
         """ Show long names for all entries in path """
         def to_long(path):
             for p in path:
-                long = get_long_path_name(p)
+                long = get_long_path_name(os.path.expandvars(p))
                 if p != long:
 
                     print p, "->", long
@@ -296,7 +297,7 @@ def main():
         oldpath_l = oldpath.lower().split(";")
         newpath = oldpath.split(";")
         for d in arg.directory:
-            d = os.path.abspath(d)
+            d = os.path.abspath(d) if not d.startswith("%") else d
             if d.lower() in oldpath_l:
                 print "Skip existing:", d
                 continue
@@ -320,6 +321,11 @@ def main():
 
         process_paths([remover], arg.commit)
 
+    def env_paths(arg):
+        for k,v in os.environ.items():
+            if os.path.exists(os.path.expandvars(v)):
+                print k,"->", v
+
     pp = argparse.ArgumentParser(prog = "wpathr",
     description="PATH optimization and management utility for Windows",
     epilog="See https://github.com/vivainio/wpathr for detailed documentation.")
@@ -331,7 +337,7 @@ def main():
     ddc = args.sub("dedupe", dedupe, help = "Remove duplicate paths")
     exc = args.sub("exists", exists, help = "Remove nonexisting paths")
     src = args.sub("search", search, help = "Scan through path for files matching PATTERN")
-    lnc = args.sub("long", longnames, help = "Show long names (progra~1 -> Program Files")
+    lnc = args.sub("long", longnames, help = "Show long names (progra~1 -> Program Files)")
     fac = args.sub("factor", factor, help = "Factor out runs of VALUE in path to %%VARIABLE%% referenses")
     fac.arg("variable", metavar="VARIABLE")
     fac.arg("value", metavar="VALUE")
@@ -349,6 +355,7 @@ def main():
     rmc = args.sub('remove', remove_s, help="Remove directory from path")
     rmc.arg('directory', nargs="+")
 
+    pvc = args.sub('env', env_paths, help="List env variables that refer to existing paths")
     # operations that support --commit
     for a in [sqc, ddc, exc, fac, adc, rmc]:
         a.arg("--commit", action='store_true')
