@@ -44,6 +44,16 @@ class Win32Environment:
         # For some strange reason, calling SendMessage from the current process
         # doesn't propagate environment changes at all.
         # TODO: handle CalledProcessError (for assert)
+    def items(self):
+        key = winreg.OpenKey(self.root, self.subkey,0, winreg.KEY_ALL_ACCESS)
+        i=0
+        while 1:
+            try:
+                v = winreg.EnumValue(key, i)
+            except WindowsError:
+                return
+            yield (v[0],v[1])
+            i+=1
 
 
 _GetShortPathNameW = ctypes.windll.kernel32.GetShortPathNameW
@@ -322,9 +332,24 @@ def main():
         process_paths([remover], arg.commit)
 
     def env_paths(arg):
-        for k,v in os.environ.items():
+
+        uncovered = set(k.upper() for k in os.environ)
+        for sco in ('user', 'system'):
+            print "\n**",sco
+            vars = Win32Environment(sco).items()
+            for k,v in sorted(vars):
+                if os.path.exists(os.path.expandvars(v)):
+                    uncovered.discard(k.upper())
+
+                    print k,"->", v
+        print "\n** Unknown (not in registry)"
+        for uc in sorted(uncovered):
+            v = os.environ[uc]
             if os.path.exists(os.path.expandvars(v)):
-                print k,"->", v
+                print uc,"->", v
+
+
+
 
     pp = argparse.ArgumentParser(prog = "wpathr",
     description="PATH optimization and management utility for Windows",
