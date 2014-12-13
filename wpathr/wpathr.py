@@ -144,8 +144,6 @@ def main():
 
         full_path = set(os.environ["PATH"].split(";"))
 
-
-
         eu = Win32Environment(scope='user')
         print "\n\n*** USER: ***\n"
         upath = sorted(eu.getenv("PATH").split(";"))
@@ -165,8 +163,6 @@ def main():
         if inactive:
             print "\n\n*** INACTIVE (in registry but not in current environ): ***\n"
             print "\n".join(sorted(inactive))
-
-
 
 
     def squash(arg):
@@ -234,6 +230,8 @@ def main():
         def search_path(path):
             for p in path:
                 ep = os.path.expandvars(p)
+                if not os.path.isdir(ep):
+                    print "NONEXISTING:", ep
                 ents = os.listdir(ep)
 
                 #print ents
