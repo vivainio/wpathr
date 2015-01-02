@@ -136,6 +136,8 @@ def process_paths(funcs, commit=False):
             # no manipulation, assume no mods needed and exit
             continue
 
+        # remove empty elements
+        cur_path = filter(None, cur_path)
 
         newpath = ";".join(cur_path)
         new_items = set(cur_path)
@@ -285,7 +287,7 @@ def main():
 
                     print p, "->", long
                 else:
-                    print p
+                    print p if p else '<empty>'
             return None
 
         process_paths([to_long], None)
