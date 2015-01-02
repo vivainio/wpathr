@@ -125,7 +125,7 @@ def process_paths(funcs, commit=False):
     dirty = False
     for sc in ['user', 'system']:
         env = Win32Environment(scope=sc)
-        oldpath = env.getenv("PATH")
+        oldpath = env.getenv("PATH").rstrip(";")
         cur_path = oldpath.split(";")
         old_items = set(cur_path)
         for f in funcs:
@@ -321,7 +321,7 @@ def main():
 
     def add_s(arg):
         e = Win32Environment('system')
-        oldpath = e.getenv("PATH")
+        oldpath = e.getenv("PATH").rstrip(";")
         oldpath_l = oldpath.lower().split(";")
         newpath = oldpath.split(";")
         for d in arg.directory:
