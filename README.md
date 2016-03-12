@@ -1,28 +1,29 @@
-# wpathr: shorten your PATH on windows.
+# wpp: shorten your PATH on windows.
 
-wpathr (pronounced 'weather') is a PATH manipulation tool.
-Taking backup of your relevant Path registry entries is adviced. Note that
-editing registry *can* wedge up your system.
+wpathr (pronounced 'weather') is a PATH manipulation tool. Taking backup of your relevant Path registry entries is
+adviced. Note that editing registry *can* wedge up your system.
+
+Confusingly, the actual command name is now 'wpp' as 'wpathr' turned out to be too hard to type.
 
 Installation (assuming pip):
 
 ```sh
 
 $ pip install wpathr
-$ wpathr -h
-# ... should see help message for wpathr
+$ wpp -h
+# ... should see help message for wpp
 ```
 
 If you don't have pip, just git clone and
 
 ```sh
-python wpathr -h
+python wppathr -h
 ```
 
 Motivation:
 
-Windows has path size limitations, so when you add new entries (even through
-editing relevant registry entries directly), you may end up truncating and losing entries from path.
+Windows has path size limitations, so when you add new entries (even through editing relevant registry entries
+directly), you may end up truncating and losing entries from path.
 
 Solution:
 
@@ -41,14 +42,14 @@ Typical usage:
 ```sh
 # grab a backup
 
-$ wpathr dump > path_backup.txt
+$ wpp dump > path_backup.txt
 
 # preview what the new path would look like
-$ wpathr squash
+$ wpp squash
 
 # I like it, squash again with --commit to write changes
 
-$ wpathr squash --commit
+$ wpp squash --commit
 ```
 
 This utility supports several path operations, like:
@@ -63,15 +64,15 @@ dedupe: remove duplicates from path, ignoring case
 
 exists: remove nonexisting items from path
 
-search PATTERN PATTERN: search directories in PATH, looking for files matching any of 
- the PATTERNs under these directories. 
+search PATTERN PATTERN: search directories in PATH, looking for files matching any of
+ the PATTERNs under these directories.
 
 long: map shortened names (e.g. by squash) to long names, show on screen (but do not modify)
 
 factor: extract runs of path segment to new environment variable, e.g.
 
 ```sh
-$ wpathr factor CONEMU_ROOT "C:\Program Files\ConEmu"
+$ wpp factor CONEMU_ROOT "C:\Program Files\ConEmu"
 
 ```
 
@@ -79,22 +80,22 @@ Example: configure PATH for sublime text:
 
 ```
 # set environment variable
-$ wpathr sset SUBLIME c:\opt\ST3
+$ wpp sset SUBLIME c:\opt\ST3
 
 # add the environment variable to PATH
-wpathr add --commit %SUBLIME%
+wpp add --commit %SUBLIME%
 ```
 
 Example: make GitHub for windows paths shorter
 
 ```
-wpathr factor --commit GITHUB C:\Users\villevai\AppData\Local\GitHub
+wpp factor --commit GITHUB C:\Users\villevai\AppData\Local\GitHub
 ```
 
 Help text:
 
 ```
-usage: wpathr [-h]
+usage: wpp [-h]
               {ls,squash,dump,dedupe,exists,search,long,factor,sset,sync,add,remove}
               ...
 

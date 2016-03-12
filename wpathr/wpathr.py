@@ -407,7 +407,7 @@ def runalias_c(arg):
     os.system(fullcmd)
 
 def main():
-    pp = argparse.ArgumentParser(prog = "wpathr",
+    pp = argparse.ArgumentParser(prog = "wpp",
     description="PATH optimization and management utility for Windows",
     epilog="See https://github.com/vivainio/wpathr for detailed documentation.")
 
