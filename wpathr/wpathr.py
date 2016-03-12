@@ -6,6 +6,7 @@ import _winreg
 import args
 import fnmatch
 import argparse
+import pickleshare
 
 import sys
 from subprocess import check_call
@@ -14,6 +15,9 @@ if sys.hexversion > 0x03000000:
     import winreg
 else:
     import _winreg as winreg
+
+def db():
+    return pickleshare.PickleShareDB('~/.wpathr')
 
 class Win32Environment:
     """Utility class to get/set windows environment variable"""
@@ -64,6 +68,14 @@ _GetLongPathNameW = ctypes.windll.kernel32.GetLongPathNameW
 _GetLongPathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]
 _GetLongPathNameW.restype = wintypes.DWORD
 
+CreateSymbolicLinkW = ctypes.windll.kernel32.CreateSymbolicLinkW
+CreateSymbolicLinkW.argtypes = (ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint32)
+CreateSymbolicLinkW.restype = ctypes.c_ubyte
+
+def symlink_ms(source, link_name):
+    flags = 1 if os.path.isdir(source) else 0
+    if CreateSymbolicLinkW(link_name, source.replace('/', '\\'), flags) == 0:
+        raise ctypes.WinError()
 
 def get_short_path_name(long_name):
     """
@@ -141,7 +153,7 @@ def process_paths(funcs, commit=False):
 
         newpath = ";".join(cur_path)
         new_items = set(cur_path)
-    
+
 
         #print sc,":="
         #print newpath
@@ -168,207 +180,216 @@ def process_paths(funcs, commit=False):
         print "Call with '--commit' to commit changes to env registry"
 
 
-def main():
-    def ls(a):
-        """ Show list of paths in alphabetical order """
+#def main():
+def ls(a):
+    """ Show list of paths in alphabetical order """
 
-        full_path = set(os.environ["PATH"].split(";"))
+    full_path = set(os.environ["PATH"].split(";"))
 
-        eu = Win32Environment(scope='user')
-        print "\n\n*** USER: ***\n"
-        upath = sorted(eu.getenv("PATH").split(";"))
-        print "\n".join(upath)
+    eu = Win32Environment(scope='user')
+    print "\n\n*** USER: ***\n"
+    upath = sorted(eu.getenv("PATH").split(";"))
+    print "\n".join(upath)
 
-        es = Win32Environment(scope='system')
-        print "\n\n*** SYSTEM: ***\n"
-        spath = sorted(es.getenv("PATH").split(";"))
-        print "\n".join(spath)
+    es = Win32Environment(scope='system')
+    print "\n\n*** SYSTEM: ***\n"
+    spath = sorted(es.getenv("PATH").split(";"))
+    print "\n".join(spath)
 
-        uncovered = full_path.difference(set(upath).union(set(spath)))
-        if uncovered:
-            print "\n\n*** OTHER (nonregistry): ***\n"
-            print "\n".join(sorted(uncovered))
+    uncovered = full_path.difference(set(upath).union(set(spath)))
+    if uncovered:
+        print "\n\n*** OTHER (nonregistry): ***\n"
+        print "\n".join(sorted(uncovered))
 
-        inactive = set(upath).union(set(spath)).difference(full_path)
-        if inactive:
-            print "\n\n*** INACTIVE (in registry but not in current environ): ***\n"
-            print "\n".join(sorted(d for d in inactive if not d.startswith('%')))
-
-
-    def squash(arg):
-        """ Shorten path by using windows "short" path names (Program~1)"""
-        for sc in ['user', 'system']:
-            env = Win32Environment(scope=sc)
-            oldpath = env.getenv("PATH")
-
-            newpath = ";".join(shorten_path(oldpath.split(";")))
-            print sc,":="
-            print newpath
-            if arg.commit:
-                env.setenv("PATH", newpath)
+    inactive = set(upath).union(set(spath)).difference(full_path)
+    if inactive:
+        print "\n\n*** INACTIVE (in registry but not in current environ): ***\n"
+        print "\n".join(sorted(d for d in inactive if not d.startswith('%')))
 
 
-        if not arg.commit:
-            print "Call 'wpathr squash --commit' to commit changes to env registry"
-        else:
-            print "Committed changes to registry"
-            #print newpath
+def squash(arg):
+    """ Shorten path by using windows "short" path names (Program~1)"""
+    for sc in ['user', 'system']:
+        env = Win32Environment(scope=sc)
+        oldpath = env.getenv("PATH")
 
-    def dump(arg):
-        """ Dump user and system path settings """
-        for sc in ['user', 'system']:
-            env = Win32Environment(scope=sc)
-            oldpath = env.getenv("PATH")
-            print sc, ":="
-            print oldpath
-
-    def dedupe(arg):
-        """ Remove duplicates from path """
-        def deduper(path):
-            rset = set()
-            r = []
-            for e in path:
-                if e.lower() in rset:
-                    print "Duplicate:", e
-                else:
-                    r.append(e)
-                    rset.add(e.lower())
-            return r
-
-        process_paths([deduper], arg.commit)
-
-    def exists(arg):
-        """ Filter path by removing nonexisting entries """
-
-        def check_existing(path):
-            r = []
-            for p in path:
-                pe = os.path.expandvars(p)
-                if os.path.isdir(pe):
-                    r.append(p)
-                else:
-                    print "Path does not exist:", p
-            return r
-
-        process_paths([check_existing], arg.commit)
-
-
-    def search(arg):
-        """ Search path for files matching a pattern """
-
-        patterns = [p if '*' in p else p+"*" for p in arg.pattern]
-        def search_path(path):
-            for p in path:
-                ep = os.path.expandvars(p)
-                if not os.path.isdir(ep):
-                    print "NONEXISTING:", ep
-                # print "Scan",ep
-                ents = os.listdir(ep)
-
-                #print ents
-                hits = set()
-                for pat in patterns:
-
-                    hits.update(h for h in ents if fnmatch.fnmatch(h,pat))
-
-                if hits:
-                    print p
-                    print " " + " ".join(hits)
-            return None
-
-        process_paths([search_path], None)
-
-    def longnames(arg):
-        """ Show long names for all entries in path """
-        def to_long(path):
-            for p in path:
-                long = get_long_path_name(os.path.expandvars(p))
-                if p != long:
-
-                    print p, "->", long
-                else:
-                    print p if p else '<empty>'
-            return None
-
-        process_paths([to_long], None)
-
-    def factor(arg):
-        print "Factor", arg
-        var = arg.variable
-        val = arg.value
-        def factor_out(path):
-            r = []
-            for p in path:
-                replaced = p.replace(val, "%" + var + "%")
-                if replaced != p:
-                    print "Can replace:", p,"->", replaced
-                r.append(replaced)
-            return r
-
-
-        if arg.commit and var in os.environ:
-            print "Cannot factor out against existing environment variable. Please remove:",var
-
-        process_paths([factor_out], arg.commit)
+        newpath = ";".join(shorten_path(oldpath.split(";")))
+        print sc,":="
+        print newpath
         if arg.commit:
-            Win32Environment('system').setenv(var, val)
+            env.setenv("PATH", newpath)
 
 
-    def sset(arg):
-        Win32Environment("system").setenv(arg.variable, arg.value)
-        broadcast_settingschanged()
+    if not arg.commit:
+        print "Call 'wpathr squash --commit' to commit changes to env registry"
+    else:
+        print "Committed changes to registry"
+        #print newpath
 
-    def sync(arg):
-        broadcast_settingschanged()
+def dump(arg):
+    """ Dump user and system path settings """
+    for sc in ['user', 'system']:
+        env = Win32Environment(scope=sc)
+        oldpath = env.getenv("PATH")
+        print sc, ":="
+        print oldpath
 
-    def add_s(arg):
-        e = Win32Environment('system')
-        oldpath = e.getenv("PATH").rstrip(";")
-        oldpath_l = oldpath.lower().split(";")
-        newpath = oldpath.split(";")
+def dedupe(arg):
+    """ Remove duplicates from path """
+    def deduper(path):
+        rset = set()
+        r = []
+        for e in path:
+            if e.lower() in rset:
+                print "Duplicate:", e
+            else:
+                r.append(e)
+                rset.add(e.lower())
+        return r
+
+    process_paths([deduper], arg.commit)
+
+def exists(arg):
+    """ Filter path by removing nonexisting entries """
+
+    def check_existing(path):
+        r = []
+        for p in path:
+            pe = os.path.expandvars(p)
+            if os.path.isdir(pe):
+                r.append(p)
+            else:
+                print "Path does not exist:", p
+        return r
+
+    process_paths([check_existing], arg.commit)
+
+
+def search(arg):
+    """ Search path for files matching a pattern """
+
+    patterns = [p if '*' in p else p+"*" for p in arg.pattern]
+    def search_path(path):
+        for p in path:
+            ep = os.path.expandvars(p)
+            if not os.path.isdir(ep):
+                print "NONEXISTING:", ep
+            # print "Scan",ep
+            ents = os.listdir(ep)
+
+            #print ents
+            hits = set()
+            for pat in patterns:
+
+                hits.update(h for h in ents if fnmatch.fnmatch(h,pat))
+
+            if hits:
+                print p
+                print " " + " ".join(hits)
+        return None
+
+    process_paths([search_path], None)
+
+def longnames(arg):
+    """ Show long names for all entries in path """
+    def to_long(path):
+        for p in path:
+            long = get_long_path_name(os.path.expandvars(p))
+            if p != long:
+
+                print p, "->", long
+            else:
+                print p if p else '<empty>'
+        return None
+
+    process_paths([to_long], None)
+
+def factor(arg):
+    print "Factor", arg
+    var = arg.variable
+    val = arg.value
+    def factor_out(path):
+        r = []
+        for p in path:
+            replaced = p.replace(val, "%" + var + "%")
+            if replaced != p:
+                print "Can replace:", p,"->", replaced
+            r.append(replaced)
+        return r
+
+
+    if arg.commit and var in os.environ:
+        print "Cannot factor out against existing environment variable. Please remove:",var
+
+    process_paths([factor_out], arg.commit)
+    if arg.commit:
+        Win32Environment('system').setenv(var, val)
+
+
+def sset_c(arg):
+    Win32Environment("system").setenv(arg.variable, arg.value)
+    broadcast_settingschanged()
+
+def sync(arg):
+    broadcast_settingschanged()
+
+def add_s(arg):
+    e = Win32Environment('system')
+    oldpath = e.getenv("PATH").rstrip(";")
+    oldpath_l = oldpath.lower().split(";")
+    newpath = oldpath.split(";")
+    for d in arg.directory:
+        d = os.path.abspath(d) if not d.startswith("%") else d
+        if d.lower() in oldpath_l:
+            print "Skip existing:", d
+            continue
+
+        newpath.append(d)
+        print "Add:",d
+    if not arg.commit:
+        print "Call with '--commit' to write changes"
+        return
+
+    e.setenv("PATH", ';'.join(newpath))
+
+def remove_s(arg):
+    def remover(path):
+        newpath = path[:]
         for d in arg.directory:
-            d = os.path.abspath(d) if not d.startswith("%") else d
-            if d.lower() in oldpath_l:
-                print "Skip existing:", d
-                continue
+            if d in newpath:
+                #print "Remove:",d
+                newpath.remove(d)
+        return newpath
 
-            newpath.append(d)
-            print "Add:",d
-        if not arg.commit:
-            print "Call with '--commit' to write changes"
-            return
+    process_paths([remover], arg.commit)
 
-        e.setenv("PATH", ';'.join(newpath))
+def env_paths(arg):
 
-    def remove_s(arg):
-        def remover(path):
-            newpath = path[:]
-            for d in arg.directory:
-                if d in newpath:
-                    #print "Remove:",d
-                    newpath.remove(d)
-            return newpath
-
-        process_paths([remover], arg.commit)
-
-    def env_paths(arg):
-
-        uncovered = set(k.upper() for k in os.environ)
-        for sco in ('user', 'system'):
-            print "\n**",sco
-            vars = Win32Environment(sco).items()
-            for k,v in sorted(vars):
-                if os.path.exists(os.path.expandvars(v)):
-                    uncovered.discard(k.upper())
-
-                    print k,"->", v
-        print "\n** Unknown (not in registry)"
-        for uc in sorted(uncovered):
-            v = os.environ[uc]
+    uncovered = set(k.upper() for k in os.environ)
+    for sco in ('user', 'system'):
+        print "\n**",sco
+        vars = Win32Environment(sco).items()
+        for k,v in sorted(vars):
             if os.path.exists(os.path.expandvars(v)):
-                print uc,"->", v
+                uncovered.discard(k.upper())
 
+                print k,"->", v
+    print "\n** Unknown (not in registry)"
+    for uc in sorted(uncovered):
+        v = os.environ[uc]
+        if os.path.exists(os.path.expandvars(v)):
+            print uc,"->", v
 
+def symlink_c(arg):
+    pass
+
+def symlinks_c(arg):
+    print "symlinks", arg
+
+def alias_c(arg):
+    print "alias", arg.name, "for", arg.command
+
+def main():
     pp = argparse.ArgumentParser(prog = "wpathr",
     description="PATH optimization and management utility for Windows",
     epilog="See https://github.com/vivainio/wpathr for detailed documentation.")
@@ -384,7 +405,7 @@ def main():
     fac = args.sub("factor", factor, help = "Factor out runs of VALUE in path to %%VARIABLE%% referenses")
     fac.arg("variable", metavar="VARIABLE")
     fac.arg("value", metavar="VALUE")
-    sset = args.sub("sset", sset, help="Set SYSTEM env variable to VALUE. Like xset /s, really")
+    sset = args.sub("sset", sset_c, help="Set SYSTEM env variable to VALUE. Like xset /s, really")
     sset.arg("variable", metavar="VARIABLE")
     sset.arg("value", metavar="VALUE")
 
@@ -400,6 +421,20 @@ def main():
 
     pvc = args.sub('env', env_paths, help="List env variables that refer to existing paths")
     # operations that support --commit
+
+    slc = args.sub('symlink', symlinks_c, help="Create one symbolic link to TARGET from SOURCE")
+    slc.arg('target', metavar="TARGET", nargs=1)
+    slc.arg('source', metavar="SOURCE", nargs=1)
+
+
+    slc = args.sub('symlinks', symlinks_c, help="Create many symbolic links to dir TARGET from SOURCE")
+    slc.arg('target', metavar="TARGET", nargs=1)
+    slc.arg('source', metavar="SOURCE", nargs="+")
+
+    alias = args.sub('alias', alias_c, help="Create system global alias")
+    alias.arg('name')
+    alias.arg('command')
+
     for a in [sqc, ddc, exc, fac, adc, rmc]:
         a.arg("--commit", action='store_true')
 
