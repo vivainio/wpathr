@@ -7,8 +7,9 @@ import args
 import fnmatch
 import argparse
 import pickleshare
-
+import pprint
 import sys
+
 from subprocess import check_call
 
 if sys.hexversion > 0x03000000:
@@ -16,7 +17,7 @@ if sys.hexversion > 0x03000000:
 else:
     import _winreg as winreg
 
-def db():
+def get_db():
     return pickleshare.PickleShareDB('~/.wpathr')
 
 class Win32Environment:
@@ -388,6 +389,22 @@ def symlinks_c(arg):
 
 def alias_c(arg):
     print "alias", arg.name, "for", arg.command
+    db = get_db()
+    aliases = db.get('alias', {})
+    aliases[arg.name] = os.path.abspath(arg.command)
+    db['alias'] = aliases
+
+def runalias_c(arg):
+    db = get_db()
+    aliases = db['alias']
+    cmd = aliases.get(arg.name, None)
+    if cmd is None:
+        pprint.pprint(aliases)
+        return
+
+    fullcmd = cmd + ' ' + " ".join(arg.args)
+    print ">", fullcmd
+    os.system(fullcmd)
 
 def main():
     pp = argparse.ArgumentParser(prog = "wpathr",
@@ -426,14 +443,17 @@ def main():
     slc.arg('target', metavar="TARGET", nargs=1)
     slc.arg('source', metavar="SOURCE", nargs=1)
 
-
     slc = args.sub('symlinks', symlinks_c, help="Create many symbolic links to dir TARGET from SOURCE")
     slc.arg('target', metavar="TARGET", nargs=1)
     slc.arg('source', metavar="SOURCE", nargs="+")
 
-    alias = args.sub('alias', alias_c, help="Create system global alias")
+    alias = args.sub('alias', alias_c, help="Create alias for a command")
     alias.arg('name')
     alias.arg('command')
+
+    runalias = args.sub('r', runalias_c, help="Run aliased command with arguments")
+    runalias.arg('name', metavar="ALIAS")
+    runalias.arg('args', metavar="ARGUMENTS", nargs=argparse.REMAINDER)
 
     for a in [sqc, ddc, exc, fac, adc, rmc]:
         a.arg("--commit", action='store_true')
