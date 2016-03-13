@@ -382,7 +382,7 @@ def env_paths(arg):
             print uc,"->", v
 
 def symlink_c(arg):
-    pass
+    symlink_ms(arg.filepath, arg.linkname)
 
 def symlinks_c(arg):
     print "symlinks", arg
@@ -439,9 +439,9 @@ def main():
     pvc = args.sub('env', env_paths, help="List env variables that refer to existing paths")
     # operations that support --commit
 
-    slc = args.sub('symlink', symlinks_c, help="Create one symbolic link to TARGET from SOURCE")
-    slc.arg('target', metavar="TARGET", nargs=1)
-    slc.arg('source', metavar="SOURCE", nargs=1)
+    slc = args.sub('symlink', symlink_c, help="Create symbolic link at LINKPATH from SOURCE")
+    slc.arg('linkname', metavar="LINKPATH")
+    slc.arg('filepath', metavar="FILEPATH")
 
     slc = args.sub('symlinks', symlinks_c, help="Create many symbolic links to dir TARGET from SOURCE")
     slc.arg('target', metavar="TARGET", nargs=1)
