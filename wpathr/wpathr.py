@@ -115,7 +115,8 @@ def broadcast_settingschanged():
 
     result = ctypes.c_long()
     SendMessageTimeoutW = ctypes.windll.user32.SendMessageTimeoutW
-    SendMessageTimeoutW(HWND_BROADCAST, WM_SETTINGCHANGE, 0, u'Environment', SMTO_ABORTIFHUNG, 5000, ctypes.byref(result));
+    SendMessageTimeoutW(HWND_BROADCAST, WM_SETTINGCHANGE, 0, u'Environment', SMTO_ABORTIFHUNG, 5000,
+        ctypes.byref(result))
 
 def shorten_path(ents):
     od = OrderedDict()
@@ -123,10 +124,10 @@ def shorten_path(ents):
         od.update({e:1})
 
     def should_shorten(ent):
-        if '~' in ent or len(ent) < 50:
-            return False
         if ' ' in ent:
             return True
+        if '~' in ent or len(ent) < 50:
+            return False
         return False
 
     return [get_short_path_name(e) if should_shorten(e) else e for e in od.keys()]
@@ -382,7 +383,9 @@ def env_paths(arg):
             print uc,"->", v
 
 def symlink_c(arg):
-    symlink_ms(arg.filepath, arg.linkname)
+    fpath = os.path.abspath(arg.filepath)
+    assert os.path.exists(fpath)
+    symlink_ms(fpath, arg.linkname)
 
 def symlinks_c(arg):
     print "symlinks", arg
