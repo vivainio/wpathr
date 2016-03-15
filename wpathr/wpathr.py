@@ -391,10 +391,22 @@ def symlinks_c(arg):
     print "symlinks", arg
 
 def alias_c(arg):
-    print "alias", arg.name, "for", arg.command
     db = get_db()
     aliases = db.get('alias', {})
+
+    # 1: no args
+    if arg.name is None:
+        pprint.pprint(aliases)
+        return
+   # 2: one arg
+    if arg.command is None:
+        arg.command = os.path.abspath(arg.name)
+        arg.name = os.path.splitext(os.path.basename(arg.command))[0]
+
+
     aliases[arg.name] = os.path.abspath(arg.command)
+    print "alias: '%s' for '%s'" % (arg.name, arg.command)
+
     db['alias'] = aliases
 
 def runalias_c(arg):
@@ -405,7 +417,7 @@ def runalias_c(arg):
         pprint.pprint(aliases)
         return
 
-    fullcmd = cmd + ' ' + " ".join(arg.args)
+    fullcmd = ('"%s"' % cmd) + ' ' + " ".join(arg.args)
     print ">", fullcmd
     os.system(fullcmd)
 
@@ -446,13 +458,9 @@ def main():
     slc.arg('linkname', metavar="LINKPATH")
     slc.arg('filepath', metavar="FILEPATH")
 
-    slc = args.sub('symlinks', symlinks_c, help="Create many symbolic links to dir TARGET from SOURCE")
-    slc.arg('target', metavar="TARGET", nargs=1)
-    slc.arg('source', metavar="SOURCE", nargs="+")
-
     alias = args.sub('alias', alias_c, help="Create alias for a command")
-    alias.arg('name')
-    alias.arg('command')
+    alias.arg('name', nargs="?")
+    alias.arg('command', nargs="?")
 
     runalias = args.sub('r', runalias_c, help="Run aliased command with arguments")
     runalias.arg('name', metavar="ALIAS")
