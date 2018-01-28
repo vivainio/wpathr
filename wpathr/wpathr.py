@@ -452,7 +452,7 @@ def run_command_or_script(cmd, args):
     elif cmd.endswith(".js"):
         interp = "node "
 
-    run_and_exit("%s%s%s" % (interp, cmd, " ".join(args.argument)))
+    run_and_exit("%s%s %s" % (interp, cmd, " ".join(args.argument)))
 
 def run_up_c(arg):
     cmd = scan_up_tree(arg.command)
