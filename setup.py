@@ -1,8 +1,8 @@
 from distutils.core import setup
 
 setup(name='wpathr',
-      version='0.2.1',
-      description='Path optimization tool for Windows',
+      version='0.3.0',
+      description='Path optimization tool and command runner for Windows',
       author='Ville Vainio',
       author_email='vivainio@gmail.com',
       url='https://github.com/vivainio/wpathr',
