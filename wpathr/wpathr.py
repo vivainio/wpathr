@@ -409,6 +409,14 @@ def alias_c(arg):
 
     db['alias'] = aliases
 
+def run_and_exit(cmd):
+    """ Run command and exit process with the status value.
+
+    Run as very last thing!
+    """
+    r = os.system(cmd)
+    sys.exit(r)
+
 def runalias_c(arg):
     db = get_db()
     aliases = db['alias']
@@ -419,7 +427,40 @@ def runalias_c(arg):
 
     fullcmd = ('"%s"' % cmd) + ' ' + " ".join(arg.args)
     print ">", fullcmd
-    os.system(fullcmd)
+    run_and_exit(fullcmd)
+
+def scan_up_tree(cmd):
+    found = None
+    current = os.path.abspath(os.getcwd())
+    while 1:
+        trie = os.path.join(current, cmd)
+        if os.path.isfile(trie):
+            found = trie
+            break
+        new = os.path.dirname(current)
+        if current == new:
+            break
+        current = new
+    return found
+
+def run_command_or_script(cmd, args):
+    interp = ""
+    if cmd.endswith(".py"):
+        interp = "python "
+    elif cmd.endswith(".ps1"):
+        interp = "powershell "
+    elif cmd.endswith(".js"):
+        interp = "node "
+
+    run_and_exit("%s%s%s" % (interp, cmd, " ".join(args.argument)))
+
+def run_up_c(arg):
+    cmd = scan_up_tree(arg.command)
+    if not cmd:
+        print "Cannot find %s in any parent directory" % arg.command
+        return
+    os.chdir(os.path.dirname(cmd))
+    run_command_or_script(cmd, arg)
 
 def main():
     pp = argparse.ArgumentParser(prog = "wpp",
@@ -466,9 +507,12 @@ def main():
     runalias.arg('name', metavar="ALIAS")
     runalias.arg('args', metavar="ARGUMENTS", nargs=argparse.REMAINDER)
 
+    up = args.sub('up', run_up_c, help="Run command that exist in any parent directory")
+    up.arg("command")
+    up.arg("argument", nargs="*")
+
     for a in [sqc, ddc, exc, fac, adc, rmc]:
         a.arg("--commit", action='store_true')
-
 
     args.parse()
 

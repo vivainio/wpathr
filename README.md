@@ -3,6 +3,9 @@
 wpathr (pronounced 'weather') is a PATH manipulation tool. Taking backup of your relevant Path registry entries is
 adviced. Note that editing registry *can* wedge up your system.
 
+Coincidentally, it's also a way to create aliases ("alias" and "r" commands) and run commands in any
+parent directory ("up"). It improves on the Unix philosophy by "only doing two things, and doing them well".
+
 Confusingly, the actual command name is now 'wpp' as 'wpathr' turned out to be too hard to type.
 
 Installation (assuming pip):
@@ -96,13 +99,13 @@ Help text:
 
 ```
 usage: wpp [-h]
-              {ls,squash,dump,dedupe,exists,search,long,factor,sset,sync,add,remove}
-              ...
+           {ls,squash,dump,dedupe,exists,search,long,factor,sset,sync,add,remove,env,symlink,alias,r,up}
+           ...
 
 PATH optimization and management utility for Windows
 
 positional arguments:
-  {ls,squash,dump,dedupe,exists,search,long,factor,sset,sync,add,remove}
+  {ls,squash,dump,dedupe,exists,search,long,factor,sset,sync,add,remove,env,symlink,alias,r,up}
     ls                  List paths alphabetically
     squash              Shorten paths by squashing (convert to progra~1
                         format)
@@ -110,14 +113,21 @@ positional arguments:
     dedupe              Remove duplicate paths
     exists              Remove nonexisting paths
     search              Scan through path for files matching PATTERN
-    long                Show long names (progra~1 -> Program Files
+    long                Show long names (progra~1 -> Program Files)
     factor              Factor out runs of VALUE in path to %VARIABLE%
                         referenses
     sset                Set SYSTEM env variable to VALUE. Like xset /s, really
     sync                Notify other processes to sync the environment
     add                 Add directory to System path
     remove              Remove directory from path
+    env                 List env variables that refer to existing paths
+    symlink             Create symbolic link at LINKPATH from SOURCE
+    alias               Create alias for a command
+    r                   Run aliased command with arguments
+    up                  Run command that exist in any parent directory
 
 optional arguments:
   -h, --help            show this help message and exit
+
+See https://github.com/vivainio/wpathr for detailed documentation.
 ```
