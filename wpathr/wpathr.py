@@ -1,8 +1,12 @@
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 import os
 import ctypes
 from ctypes import wintypes
 from collections import OrderedDict
-import _winreg
+import winreg
 import argp as args
 import fnmatch
 import argparse
@@ -15,12 +19,12 @@ from subprocess import check_call
 if sys.hexversion > 0x03000000:
     import winreg
 else:
-    import _winreg as winreg
+    import winreg as winreg
 
 def get_db():
     return pickleshare.PickleShareDB('~/.wpathr')
 
-class Win32Environment:
+class Win32Environment(object):
     """Utility class to get/set windows environment variable"""
 
     def __init__(self, scope):
@@ -130,7 +134,7 @@ def shorten_path(ents):
             return False
         return False
 
-    return [get_short_path_name(e) if should_shorten(e) else e for e in od.keys()]
+    return [get_short_path_name(e) if should_shorten(e) else e for e in list(od.keys())]
 
 
 
@@ -151,7 +155,7 @@ def process_paths(funcs, commit=False):
             continue
 
         # remove empty elements
-        cur_path = filter(None, cur_path)
+        cur_path = [_f for _f in cur_path if _f]
 
         newpath = ";".join(cur_path)
         new_items = set(cur_path)
@@ -166,10 +170,10 @@ def process_paths(funcs, commit=False):
             actions.append("- " + deleted)
 
         if not actions:
-            print "No changes for:",sc
+            print("No changes for:",sc)
         else:
-            print "Changes for:",sc
-            print "\n".join(actions)
+            print("Changes for:",sc)
+            print("\n".join(actions))
             dirty = True
 
         if commit:
@@ -179,7 +183,7 @@ def process_paths(funcs, commit=False):
         # hack - do not complain if commit makes no sense
         return
     if dirty and not commit:
-        print "Call with '--commit' to commit changes to env registry"
+        print("Call with '--commit' to commit changes to env registry")
 
 
 #def main():
@@ -189,24 +193,24 @@ def ls(a):
     full_path = set(os.environ["PATH"].split(";"))
 
     eu = Win32Environment(scope='user')
-    print "\n\n*** USER: ***\n"
+    print("\n\n*** USER: ***\n")
     upath = sorted(eu.getenv("PATH").split(";"))
-    print "\n".join(upath)
+    print("\n".join(upath))
 
     es = Win32Environment(scope='system')
-    print "\n\n*** SYSTEM: ***\n"
+    print("\n\n*** SYSTEM: ***\n")
     spath = sorted(es.getenv("PATH").split(";"))
-    print "\n".join(spath)
+    print("\n".join(spath))
 
     uncovered = full_path.difference(set(upath).union(set(spath)))
     if uncovered:
-        print "\n\n*** OTHER (nonregistry): ***\n"
-        print "\n".join(sorted(uncovered))
+        print("\n\n*** OTHER (nonregistry): ***\n")
+        print("\n".join(sorted(uncovered)))
 
     inactive = set(upath).union(set(spath)).difference(full_path)
     if inactive:
-        print "\n\n*** INACTIVE (in registry but not in current environ): ***\n"
-        print "\n".join(sorted(d for d in inactive if not d.startswith('%')))
+        print("\n\n*** INACTIVE (in registry but not in current environ): ***\n")
+        print("\n".join(sorted(d for d in inactive if not d.startswith('%'))))
 
 
 def squash(arg):
@@ -216,16 +220,16 @@ def squash(arg):
         oldpath = env.getenv("PATH")
 
         newpath = ";".join(shorten_path(oldpath.split(";")))
-        print sc,":="
-        print newpath
+        print(sc,":=")
+        print(newpath)
         if arg.commit:
             env.setenv("PATH", newpath)
 
 
     if not arg.commit:
-        print "Call 'wpathr squash --commit' to commit changes to env registry"
+        print("Call 'wpathr squash --commit' to commit changes to env registry")
     else:
-        print "Committed changes to registry"
+        print("Committed changes to registry")
         #print newpath
 
 def dump(arg):
@@ -233,8 +237,8 @@ def dump(arg):
     for sc in ['user', 'system']:
         env = Win32Environment(scope=sc)
         oldpath = env.getenv("PATH")
-        print sc, ":="
-        print oldpath
+        print(sc, ":=")
+        print(oldpath)
 
 def dedupe(arg):
     """ Remove duplicates from path """
@@ -243,7 +247,7 @@ def dedupe(arg):
         r = []
         for e in path:
             if e.lower() in rset:
-                print "Duplicate:", e
+                print("Duplicate:", e)
             else:
                 r.append(e)
                 rset.add(e.lower())
@@ -261,7 +265,7 @@ def exists(arg):
             if os.path.isdir(pe):
                 r.append(p)
             else:
-                print "Path does not exist:", p
+                print("Path does not exist:", p)
         return r
 
     process_paths([check_existing], arg.commit)
@@ -275,7 +279,7 @@ def search(arg):
         for p in path:
             ep = os.path.expandvars(p)
             if not os.path.isdir(ep):
-                print "NONEXISTING:", ep
+                print("NONEXISTING:", ep)
             # print "Scan",ep
             ents = os.listdir(ep)
 
@@ -286,8 +290,8 @@ def search(arg):
                 hits.update(h for h in ents if fnmatch.fnmatch(h,pat))
 
             if hits:
-                print p
-                print " " + " ".join(hits)
+                print(p)
+                print(" " + " ".join(hits))
         return None
 
     process_paths([search_path], None)
@@ -297,17 +301,17 @@ def longnames(arg):
     def to_long(path):
         for p in path:
             long = get_long_path_name(os.path.expandvars(p))
-            if p != long:
+            if p != int:
 
-                print p, "->", long
+                print(p, "->", int)
             else:
-                print p if p else '<empty>'
+                print(p if p else '<empty>')
         return None
 
     process_paths([to_long], None)
 
 def factor(arg):
-    print "Factor", arg
+    print("Factor", arg)
     var = arg.variable
     val = arg.value
     def factor_out(path):
@@ -315,13 +319,13 @@ def factor(arg):
         for p in path:
             replaced = p.replace(val, "%" + var + "%")
             if replaced != p:
-                print "Can replace:", p,"->", replaced
+                print("Can replace:", p,"->", replaced)
             r.append(replaced)
         return r
 
 
     if arg.commit and var in os.environ:
-        print "Cannot factor out against existing environment variable. Please remove:",var
+        print("Cannot factor out against existing environment variable. Please remove:",var)
 
     process_paths([factor_out], arg.commit)
     if arg.commit:
@@ -343,13 +347,13 @@ def add_s(arg):
     for d in arg.directory:
         d = os.path.abspath(d) if not d.startswith("%") else d
         if d.lower() in oldpath_l:
-            print "Skip existing:", d
+            print("Skip existing:", d)
             continue
 
         newpath.append(d)
-        print "Add:",d
+        print("Add:",d)
     if not arg.commit:
-        print "Call with '--commit' to write changes"
+        print("Call with '--commit' to write changes")
         return
 
     e.setenv("PATH", ';'.join(newpath))
@@ -369,18 +373,18 @@ def env_paths(arg):
 
     uncovered = set(k.upper() for k in os.environ)
     for sco in ('user', 'system'):
-        print "\n**",sco
-        vars = Win32Environment(sco).items()
+        print("\n**",sco)
+        vars = list(Win32Environment(sco).items())
         for k,v in sorted(vars):
             if os.path.exists(os.path.expandvars(v)):
                 uncovered.discard(k.upper())
 
-                print k,"->", v
-    print "\n** Unknown (not in registry)"
+                print(k,"->", v)
+    print("\n** Unknown (not in registry)")
     for uc in sorted(uncovered):
         v = os.environ[uc]
         if os.path.exists(os.path.expandvars(v)):
-            print uc,"->", v
+            print(uc,"->", v)
 
 def symlink_c(arg):
     fpath = os.path.abspath(arg.filepath)
@@ -388,7 +392,7 @@ def symlink_c(arg):
     symlink_ms(fpath, arg.linkname)
 
 def symlinks_c(arg):
-    print "symlinks", arg
+    print("symlinks", arg)
 
 def alias_c(arg):
     db = get_db()
@@ -405,7 +409,7 @@ def alias_c(arg):
 
 
     aliases[arg.name] = os.path.abspath(arg.command)
-    print "alias: '%s' for '%s'" % (arg.name, arg.command)
+    print("alias: '%s' for '%s'" % (arg.name, arg.command))
 
     db['alias'] = aliases
 
@@ -426,7 +430,7 @@ def runalias_c(arg):
         return
 
     fullcmd = ('"%s"' % cmd) + ' ' + " ".join(arg.args)
-    print ">", fullcmd
+    print(">", fullcmd)
     run_and_exit(fullcmd)
 
 def scan_up_tree(cmd):
@@ -457,7 +461,7 @@ def run_command_or_script(cmd, args):
 def run_up_c(arg):
     cmd = scan_up_tree(arg.command)
     if not cmd:
-        print "Cannot find %s in any parent directory" % arg.command
+        print("Cannot find %s in any parent directory" % arg.command)
         return
     os.chdir(os.path.dirname(cmd))
     run_command_or_script(cmd, arg)
