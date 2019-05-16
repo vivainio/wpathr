@@ -3,7 +3,7 @@ import ctypes
 from ctypes import wintypes
 from collections import OrderedDict
 import _winreg
-import args
+import argp as args
 import fnmatch
 import argparse
 import pickleshare

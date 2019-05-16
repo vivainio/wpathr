@@ -7,7 +7,7 @@ setup(name='wpathr',
       author_email='vivainio@gmail.com',
       url='https://github.com/vivainio/wpathr',
       packages=['wpathr'],
-      install_requires=['pickleshare'],
+      install_requires=['pickleshare', 'argp'],
       entry_points = {
         'console_scripts': [
             'wpp = wpathr.wpathr:main'
