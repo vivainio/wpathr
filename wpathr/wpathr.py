@@ -300,10 +300,10 @@ def longnames(arg):
     """ Show long names for all entries in path """
     def to_long(path):
         for p in path:
-            long = get_long_path_name(os.path.expandvars(p))
-            if p != int:
+            longname = get_long_path_name(os.path.expandvars(p))
+            if p != longname:
 
-                print(p, "->", int)
+                print(p, "->", longname)
             else:
                 print(p if p else '<empty>')
         return None
